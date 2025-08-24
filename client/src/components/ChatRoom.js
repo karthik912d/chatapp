@@ -5,7 +5,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { MdGroup } from "react-icons/md";
 
 // Define the ENDPOINT constant before it is used
-const ENDPOINT = process.env.REACT_APP_API_URL;
+const ENDPOINT = 'https://ourchive-backend.onrender.com';
 
 let socket;
 
