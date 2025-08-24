@@ -1,13 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'https://ourchive-backend.onrender.com/api/auth';
+const API_URL = process.env.REACT_APP_API_URL;
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL;
 
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
+  const [backendAlive, setBackendAlive] = useState(false);
+
+  // ✅ Ping backend on load
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        await axios.get(`${SOCKET_URL}/ping`);
+        setBackendAlive(true);
+      } catch (err) {
+        setMessage('⏳ Backend is waking up... please wait 30-60s');
+      }
+    };
+    checkBackend();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +40,7 @@ function Login({ onLoginSuccess }) {
         setMessage('Registration successful! You can now log in.');
         setIsLogin(true);
       }
-      
+
       console.log('API Response:', res.data);
 
     } catch (err) {
@@ -37,6 +52,10 @@ function Login({ onLoginSuccess }) {
       console.error('API Error:', err);
     }
   };
+
+  if (!backendAlive) {
+    return <p className="message">{message || '⏳ Checking backend...'}</p>;
+  }
 
   return (
     <div className="login-container">

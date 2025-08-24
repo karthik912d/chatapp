@@ -7,20 +7,28 @@ const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const Message = require('./models/Message');
 const DirectMessage = require('./models/DirectMessage');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 
 require('dotenv').config();
 
-// The allowed origin for both HTTP and WebSocket connections
-const allowedOrigin = "https://chatapp-s7bdayzqp-karthiks-projects-6b7b770b.vercel.app";
+// ✅ Allowed origin (your Vercel frontend)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://chatapp-iota-ochre.vercel.app"
+];
 
 // Middleware for HTTP requests
 app.use(express.json());
 app.use(cors({
-  origin: allowedOrigin,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -37,23 +45,16 @@ const connectDB = async () => {
 };
 connectDB();
 
-// Initialize Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigin,
-    methods: ["GET", "POST"]
-  }
+// ✅ Health check route
+app.get('/ping', (req, res) => {
+  res.status(200).send('Backend is alive 🚀');
 });
 
-const usersInRooms = {};
-const usersToSockets = {};
-
-// Use the authentication routes
+// Routes
 app.use('/api/auth', authRoutes);
-// Use the chat routes
 app.use('/api/chat', chatRoutes);
 
-// DM route to fetch direct message history
+// DM route
 app.get('/api/dm/:user1/:user2', async (req, res) => {
   try {
     const { user1, user2 } = req.params;
@@ -69,6 +70,17 @@ app.get('/api/dm/:user1/:user2', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+// Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"]
+  }
+});
+
+const usersInRooms = {};
+const usersToSockets = {};
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
