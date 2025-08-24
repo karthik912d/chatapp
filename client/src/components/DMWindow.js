@@ -3,8 +3,8 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import { MdArrowBack } from "react-icons/md";
 
-const API_URL = 'https://ourchive-backend.onrender.com/api'; 
-const SOCKET_URL = 'https://ourchive-backend.onrender.com';
+const API_URL = 'https://ourchive-backend.onrender.com/api'; // ✅ REST API
+const SOCKET_URL = 'https://ourchive-backend.onrender.com';  // ✅ Socket.io
 
 let socket;
 
@@ -15,7 +15,7 @@ function DMWindow({ username, recipient, onBack }) {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await axios.get(`${ENDPOINT}/api/dm/${username}/${recipient}`);
+        const res = await axios.get(`${API_URL}/dm/${username}/${recipient}`);
         setMessages(res.data);
       } catch (err) {
         console.error('Error fetching DM messages:', err);
@@ -23,21 +23,19 @@ function DMWindow({ username, recipient, onBack }) {
     };
 
     fetchMessages();
-    
-    socket = io(ENDPOINT, { autoConnect: false });
+
+    socket = io(SOCKET_URL, { autoConnect: false });
     socket.connect();
 
-    const handleReceiveDM = (data) => {
-      if ((data.sender === recipient && data.receiver === username) || 
+    socket.on('receive_dm', (data) => {
+      if ((data.sender === recipient && data.receiver === username) ||
           (data.sender === username && data.receiver === recipient)) {
         setMessages(prevMessages => [...prevMessages, data]);
       }
-    };
-
-    socket.on('receive_dm', handleReceiveDM);
+    });
 
     return () => {
-      socket.off('receive_dm', handleReceiveDM);
+      socket.off('receive_dm');
       socket.disconnect();
     };
   }, [username, recipient]);

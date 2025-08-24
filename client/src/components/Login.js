@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-// The API_URL constant must be defined before being used
-const API_URL = 'https://ourchive-backend.onrender.com/api';
+const API_URL = 'https://ourchive-backend.onrender.com/api'; // ✅ REST API base
 
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -17,23 +16,22 @@ function Login({ onLoginSuccess }) {
     try {
       let res;
       if (isLogin) {
-        res = await axios.post(`${API_URL}/login`, { username, password });
+        res = await axios.post(`${API_URL}/auth/login`, { username, password });
         localStorage.setItem('token', res.data.token);
         onLoginSuccess(username);
         setMessage('Login successful!');
       } else {
-        res = await axios.post(`${API_URL}/register`, { username, password });
+        res = await axios.post(`${API_URL}/auth/register`, { username, password });
         setMessage('Registration successful! You can now log in.');
         setIsLogin(true);
       }
-      
-      console.log('API Response:', res.data);
 
+      console.log('API Response:', res.data);
     } catch (err) {
       if (err.response && err.response.data) {
-        setMessage(err.response.data.msg);
+        setMessage(err.response.data.msg || err.response.data.error || 'Something went wrong.');
       } else {
-        setMessage('An unexpected error occurred.');
+        setMessage('Server not reachable.');
       }
       console.error('API Error:', err);
     }

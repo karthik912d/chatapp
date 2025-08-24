@@ -4,8 +4,8 @@ import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
 import { MdGroup } from "react-icons/md";
 
-const API_URL = 'https://ourchive-backend.onrender.com/api';
-const SOCKET_URL = 'https://ourchive-backend.onrender.com';
+const API_URL = 'https://ourchive-backend.onrender.com/api'; // ✅ REST API
+const SOCKET_URL = 'https://ourchive-backend.onrender.com';  // ✅ Socket.io
 
 let socket;
 
@@ -19,7 +19,7 @@ function ChatRoom({ username, room, onLogout, onSelectRecipient }) {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await axios.get(`${ENDPOINT}/api/chat/messages/${room}`);
+        const res = await axios.get(`${API_URL}/chat/messages/${room}`);
         setMessages(res.data);
       } catch (err) {
         console.error('Error fetching messages:', err);
@@ -27,31 +27,27 @@ function ChatRoom({ username, room, onLogout, onSelectRecipient }) {
     };
 
     fetchMessages();
-    
-    socket = io(ENDPOINT, { autoConnect: false });
+
+    socket = io(SOCKET_URL, { autoConnect: false });
     socket.connect();
     socket.emit('join_room', { room, username });
 
-    const handleReceiveMessage = (data) => {
+    socket.on('receive_message', (data) => {
       setMessages(prevMessages => [...prevMessages, data]);
-    };
+    });
 
-    const handleUpdateUsers = (users) => {
+    socket.on('update_users', (users) => {
       setOnlineUsers(users);
-    };
-    
-    const handleError = (error) => {
-        console.error('Socket Error:', error);
-    };
+    });
 
-    socket.on('receive_message', handleReceiveMessage);
-    socket.on('update_users', handleUpdateUsers);
-    socket.on('error', handleError);
+    socket.on('error', (error) => {
+      console.error('Socket Error:', error);
+    });
 
     return () => {
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('update_users', handleUpdateUsers);
-      socket.off('error', handleError);
+      socket.off('receive_message');
+      socket.off('update_users');
+      socket.off('error');
       socket.disconnect();
     };
   }, [room, username]);
@@ -64,10 +60,10 @@ function ChatRoom({ username, room, onLogout, onSelectRecipient }) {
         message: newMessage,
         room: room,
       };
-      
+
       socket.emit('send_message', messageData);
       setMessages(prevMessages => [...prevMessages, messageData]);
-      
+
       setNewMessage('');
       setShowEmojiPicker(false);
     }
