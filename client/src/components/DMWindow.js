@@ -3,8 +3,8 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import { MdArrowBack } from "react-icons/md";
 
-// Define the ENDPOINT constant before it is used
-const ENDPOINT = 'https://ourchive-backend.onrender.com/api/auth';
+const API_URL = 'https://ourchive-backend.onrender.com/api'; 
+const SOCKET_URL = 'https://ourchive-backend.onrender.com';
 
 let socket;
 
