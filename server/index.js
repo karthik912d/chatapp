@@ -13,13 +13,23 @@ const server = http.createServer(app);
 
 require('dotenv').config();
 
-// The allowed origin for both HTTP and WebSocket connections
-const allowedOrigin = "https://chatapp-s7bdayzqp-karthiks-projects-6b7b770b.vercel.app";
+// ✅ Allowed origins (add your real Vercel domain here too)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://chatapp-s7bdayzqp-karthiks-projects-6b7b770b.vercel.app",
+  "https://chatapp.vercel.app" // your final Vercel domain
+];
 
 // Middleware for HTTP requests
 app.use(express.json());
 app.use(cors({
-  origin: allowedOrigin,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -28,9 +38,9 @@ app.use(cors({
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connected successfully!');
+    console.log('✅ MongoDB connected successfully!');
   } catch (err) {
-    console.error('MongoDB connection failed:', err.message);
+    console.error('❌ MongoDB connection failed:', err.message);
     process.exit(1);
   }
 };
@@ -39,7 +49,7 @@ connectDB();
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigin,
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -47,10 +57,14 @@ const io = new Server(server, {
 const usersInRooms = {};
 const usersToSockets = {};
 
-// Use the authentication routes
+// Routes
 app.use('/api/auth', authRoutes);
-// Use the chat routes
 app.use('/api/chat', chatRoutes);
+
+// Test route to check connectivity
+app.get('/api/auth/test', (req, res) => {
+  res.json({ success: true, message: "Backend is reachable 🚀" });
+});
 
 // DM route to fetch direct message history
 app.get('/api/dm/:user1/:user2', async (req, res) => {
@@ -132,4 +146,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
