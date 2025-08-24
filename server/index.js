@@ -7,29 +7,20 @@ const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const Message = require('./models/Message');
 const DirectMessage = require('./models/DirectMessage');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 
 require('dotenv').config();
 
-// ✅ Allowed origins (add your real Vercel domain here too)
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://chatapp-s7bdayzqp-karthiks-projects-6b7b770b.vercel.app",
-  "https://chatapp.vercel.app" // your final Vercel domain
-];
+// The allowed origin for both HTTP and WebSocket connections
+const allowedOrigin = "https://chatapp-s7bdayzqp-karthiks-projects-6b7b770b.vercel.app";
 
 // Middleware for HTTP requests
 app.use(express.json());
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: allowedOrigin,
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -38,9 +29,9 @@ app.use(cors({
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ MongoDB connected successfully!');
+    console.log('MongoDB connected successfully!');
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error('MongoDB connection failed:', err.message);
     process.exit(1);
   }
 };
@@ -49,7 +40,7 @@ connectDB();
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: allowedOrigin,
     methods: ["GET", "POST"]
   }
 });
@@ -57,14 +48,10 @@ const io = new Server(server, {
 const usersInRooms = {};
 const usersToSockets = {};
 
-// Routes
+// Use the authentication routes
 app.use('/api/auth', authRoutes);
+// Use the chat routes
 app.use('/api/chat', chatRoutes);
-
-// Test route to check connectivity
-app.get('/api/auth/test', (req, res) => {
-  res.json({ success: true, message: "Backend is reachable 🚀" });
-});
 
 // DM route to fetch direct message history
 app.get('/api/dm/:user1/:user2', async (req, res) => {
@@ -146,4 +133,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,38 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-// Use your backend URL from .env
-const API_URL = process.env.REACT_APP_API_URL || 'https://ourchive-backend.onrender.com/api/auth';
+const API_URL = 'https://ourchive-backend.onrender.com/api/auth';
 
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
-  const [backendOnline, setBackendOnline] = useState(false);
-
-  // ✅ Check backend status when component mounts
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        await axios.get(`${API_URL}/test`);
-        setBackendOnline(true);
-      } catch (err) {
-        console.error("Backend not reachable:", err.message);
-        setBackendOnline(false);
-      }
-    };
-    checkBackend();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
-
-    if (!backendOnline) {
-      setMessage("⚠️ Backend server is not reachable. Please try again later.");
-      return;
-    }
 
     try {
       let res;
@@ -40,10 +19,10 @@ function Login({ onLoginSuccess }) {
         res = await axios.post(`${API_URL}/login`, { username, password });
         localStorage.setItem('token', res.data.token);
         onLoginSuccess(username);
-        setMessage('✅ Login successful!');
+        setMessage('Login successful!');
       } else {
         res = await axios.post(`${API_URL}/register`, { username, password });
-        setMessage('✅ Registration successful! You can now log in.');
+        setMessage('Registration successful! You can now log in.');
         setIsLogin(true);
       }
       
@@ -51,9 +30,9 @@ function Login({ onLoginSuccess }) {
 
     } catch (err) {
       if (err.response && err.response.data) {
-        setMessage(`❌ ${err.response.data.msg}`);
+        setMessage(err.response.data.msg);
       } else {
-        setMessage('⚠️ Unexpected error. Please try again later.');
+        setMessage('An unexpected error occurred.');
       }
       console.error('API Error:', err);
     }
@@ -83,7 +62,7 @@ function Login({ onLoginSuccess }) {
             required
           />
         </div>
-        <button type="submit" className="login-button" disabled={!backendOnline}>
+        <button type="submit" className="login-button">
           {isLogin ? 'Log In' : 'Register'}
         </button>
       </form>
@@ -97,7 +76,6 @@ function Login({ onLoginSuccess }) {
         </span>
       </p>
       {message && <p className="message">{message}</p>}
-      {!backendOnline && <p className="message">🚨 Backend server is offline</p>}
     </div>
   );
 }
