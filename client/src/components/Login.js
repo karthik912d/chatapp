@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 // The API_URL constant must be defined before being used
-const API_URL = 'https://ourchive-backend.onrender.com/api/auth';
+const API_URL = `${process.env.REACT_APP_API_URL}/api/auth`;
 
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
